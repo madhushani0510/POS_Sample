@@ -20,6 +20,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import javafx.util.Callback;
+import lk.ijse.pos.dao.CustomerDAOImpl;
 import lk.ijse.pos.db.DBConnection;
 import lk.ijse.pos.view.tblmodel.OrderDetailTM;
 
@@ -117,9 +118,12 @@ public class OrderFormController implements Initializable {
                 }
 
                 try {
-                    PreparedStatement pstm = connection.prepareStatement("SELECT * FROM Customer WHERE id=?");
+                    /*PreparedStatement pstm = connection.prepareStatement("SELECT * FROM Customer WHERE id=?");
                     pstm.setObject(1, customerID);
-                    ResultSet rst = pstm.executeQuery();
+                    ResultSet rst = pstm.executeQuery();*/
+
+                    CustomerDAOImpl dao = new CustomerDAOImpl();
+                    dao.searchCustomer(customerID);
 
                     if (rst.next()) {
                         String customerName = rst.getString(2);
@@ -128,6 +132,8 @@ public class OrderFormController implements Initializable {
 
                 } catch (SQLException ex) {
                     Logger.getLogger(OrderFormController.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
 
             }
