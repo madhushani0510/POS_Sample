@@ -21,7 +21,10 @@ import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import lk.ijse.pos.dao.CustomerDAOImpl;
+import lk.ijse.pos.dao.ItemDAOImpl;
 import lk.ijse.pos.db.DBConnection;
+import lk.ijse.pos.model.Customer;
+import lk.ijse.pos.model.Item;
 import lk.ijse.pos.view.tblmodel.OrderDetailTM;
 
 
@@ -31,6 +34,7 @@ import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
@@ -118,16 +122,11 @@ public class OrderFormController implements Initializable {
                 }
 
                 try {
-                    /*PreparedStatement pstm = connection.prepareStatement("SELECT * FROM Customer WHERE id=?");
-                    pstm.setObject(1, customerID);
-                    ResultSet rst = pstm.executeQuery();*/
 
                     CustomerDAOImpl dao = new CustomerDAOImpl();
-                    dao.searchCustomer(customerID);
-
-                    if (rst.next()) {
-                        String customerName = rst.getString(2);
-                        txtCustomerName.setText(customerName);
+                    Customer customer = dao.searchCustomer(customerID);
+                    if (customer!=null) {
+                        txtCustomerName.setText(customer.getName());
                     }
 
                 } catch (SQLException ex) {
@@ -154,15 +153,13 @@ public class OrderFormController implements Initializable {
                 }
 
                 try {
-                    PreparedStatement pstm = connection.prepareStatement("SELECT * FROM Item WHERE code = ?");
-                    pstm.setObject(1, itemCode);
+                   ItemDAOImpl itemDAO = new ItemDAOImpl();
+                    Item item = itemDAO.searchItem(itemCode);
 
-                    ResultSet rst = pstm.executeQuery();
-
-                    if (rst.next()) {
-                        String description = rst.getString(2);
-                        double unitPrice = rst.getDouble(3);
-                        int qtyOnHand = rst.getInt(4);
+                    if (item!=null) {
+                        String description = item.getDescription();
+                        double unitPrice = item.getUnitPrice().doubleValue();
+                        int qtyOnHand = item.getQtyOnHand();
 
                         txtDescription.setText(description);
                         txtUnitPrice.setText(unitPrice + "");
@@ -170,6 +167,8 @@ public class OrderFormController implements Initializable {
                     }
                 } catch (SQLException ex) {
                     Logger.getLogger(OrderFormController.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
 
             }
@@ -226,10 +225,12 @@ public class OrderFormController implements Initializable {
 
     }
 
-    private void loadAllData() throws SQLException {
+    private void loadAllData() throws Exception {
 
-        Statement stm = connection.createStatement();
-        ResultSet rst = stm.executeQuery("SELECT * FROM Customer");
+        CustomerDAOImpl dao = new CustomerDAOImpl();
+        ArrayList<Customer> allCustomer = dao.getAllCustomers();
+
+
         cmbCustomerID.getItems().removeAll(cmbCustomerID.getItems());
         while (rst.next()) {
             String id = rst.getString(1);
