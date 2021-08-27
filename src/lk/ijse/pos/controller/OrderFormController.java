@@ -227,25 +227,45 @@ public class OrderFormController implements Initializable {
 
     private void loadAllData() throws Exception {
 
-        CustomerDAOImpl dao = new CustomerDAOImpl();
-        ArrayList<Customer> allCustomer = dao.getAllCustomers();
 
 
-        cmbCustomerID.getItems().removeAll(cmbCustomerID.getItems());
-        while (rst.next()) {
-            String id = rst.getString(1);
-            cmbCustomerID.getItems().add(id);
+            Statement stm = connection.createStatement();
+            ResultSet rst = stm.executeQuery("SELECT * FROM Customer");
+            cmbCustomerID.getItems().removeAll(cmbCustomerID.getItems());
+            while (rst.next()) {
+                String id = rst.getString(1);
+                cmbCustomerID.getItems().add(id);
+            }
+            rst = stm.executeQuery("SELECT * FROM Item");
+            cmbItemCode.getItems().removeAll(cmbItemCode.getItems());
+            while (rst.next()) {
+                String itemCode = rst.getString(1);
+                cmbItemCode.getItems().add(itemCode);
+                CustomerDAOImpl dao = new CustomerDAOImpl();
+
+                ArrayList<Customer> allCustomers = dao.getAllCustomers();
+
+                cmbCustomerID.getItems().removeAll(cmbCustomerID.getItems());
+
+                for (Customer customer : allCustomers) {
+                    String id = customer.getcID();
+                    cmbCustomerID.getItems().add(id);
+                }
+
+                ItemDAOImpl itemDAO = new ItemDAOImpl();
+                ArrayList<Item> allItems = itemDAO.getAllItems();
+
+                cmbItemCode.getItems().removeAll(cmbItemCode.getItems());
+                for (Item item : allItems) {
+                    itemCode = item.getCode();
+                    cmbItemCode.getItems().add(itemCode);
+                }
+
+            }
         }
-        rst = stm.executeQuery("SELECT * FROM Item");
-        cmbItemCode.getItems().removeAll(cmbItemCode.getItems());
-        while (rst.next()) {
-            String itemCode = rst.getString(1);
-            cmbItemCode.getItems().add(itemCode);
-        }
 
-    }
 
-    @FXML
+        @FXML
     private void navigateToMain(MouseEvent event) throws IOException {
         Label lblMainNav = (Label) event.getSource();
         Stage primaryStage = (Stage) lblMainNav.getScene().getWindow();
@@ -262,7 +282,6 @@ public class OrderFormController implements Initializable {
         String itemCode = cmbItemCode.getSelectionModel().getSelectedItem();
         int qty = Integer.parseInt(txtQty.getText());
         double unitPrice = Double.parseDouble(txtUnitPrice.getText());
-
         if (!update) {
             for (OrderDetailTM orderDetail : olOrderDetails) {
                 if (orderDetail.getItemCode().equals(itemCode)) {
@@ -274,15 +293,12 @@ public class OrderFormController implements Initializable {
                 }
             }
         }
-
         OrderDetailTM orderDetail = new OrderDetailTM(
                 itemCode,
                 txtDescription.getText(),
                 qty,
                 unitPrice,
                 qty * unitPrice);
-
-
         if (!update) {
             olOrderDetails.add(orderDetail);
             tblOrderDetails.setItems(olOrderDetails);
@@ -291,9 +307,9 @@ public class OrderFormController implements Initializable {
             int index = olOrderDetails.indexOf(selectedRow);
             olOrderDetails.set(index, orderDetail);
         }
-
         cmbItemCode.getSelectionModel().clearSelection();
         cmbItemCode.requestFocus();
+
 
     }
 
@@ -305,8 +321,8 @@ public class OrderFormController implements Initializable {
     }
 
     @FXML
-    private void btnPlaceOrderOnAction(ActionEvent event) {
-        try {
+    private void btnPlaceOrderOnAction(ActionEvent event) throws Exception {
+
             connection.setAutoCommit(false);
             String sql = "INSERT INTO Orders VALUES (?,?,?)";
             PreparedStatement pstm = connection.prepareStatement(sql);
@@ -314,22 +330,17 @@ public class OrderFormController implements Initializable {
             pstm.setObject(2, parseDate(txtOrderDate.getEditor().getText()));
             pstm.setObject(3, cmbCustomerID.getSelectionModel().getSelectedItem());
             int affectedRows = pstm.executeUpdate();
-
             if (affectedRows == 0) {
                 connection.rollback();
                 return;
             }
-
             pstm = connection.prepareStatement("INSERT INTO OrderDetails VALUES (?,?,?,?)");
-
-
             for (OrderDetailTM orderDetail : olOrderDetails) {
                 pstm.setObject(1, txtOrderID.getText());
                 pstm.setObject(2, orderDetail.getItemCode());
                 pstm.setObject(3, orderDetail.getQty());
                 pstm.setObject(4, orderDetail.getUnitPrice());
                 affectedRows = pstm.executeUpdate();
-
                 if (affectedRows == 0) {
                     connection.rollback();
                     return;
@@ -344,34 +355,27 @@ public class OrderFormController implements Initializable {
                 PreparedStatement pstm2 = connection.prepareStatement("UPDATE Item SET qtyOnHand=? WHERE code=?");
                 pstm2.setObject(1, qtyOnHand - orderDetail.getQty());
                 pstm2.setObject(2, orderDetail.getItemCode());
+                ItemDAOImpl itemDAO = new ItemDAOImpl();
+                Item item = itemDAO.searchItem(orderDetail.getItemCode());
 
                 affectedRows = pstm2.executeUpdate();
+                if (item != null) {
+                    qtyOnHand = item.getQtyOnHand();
+                }
+                ItemDAOImpl itemDAO1 = new ItemDAOImpl();
+                boolean b = itemDAO1.updateItemQtyOnHand(orderDetail.getItemCode(), orderDetail.getQty());
 
                 if (affectedRows == 0) {
-                    connection.rollback();
-                    return;
+                    if (!b) {
+                        connection.rollback();
+                        return;
+                    }
                 }
-
+                connection.commit();
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Order Placed", ButtonType.OK);
+                alert.show();
             }
-
-            connection.commit();
-            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Order Placed", ButtonType.OK);
-            alert.show();
-
-        } catch (SQLException ex) {
-            try {
-                connection.rollback();
-            } catch (SQLException ex1) {
-                Logger.getLogger(OrderFormController.class.getName()).log(Level.SEVERE, null, ex1);
-            }
-            Logger.getLogger(OrderFormController.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            try {
-                connection.setAutoCommit(true);
-            } catch (SQLException ex) {
-                Logger.getLogger(OrderFormController.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
+                    connection.rollback();
 
     }
 

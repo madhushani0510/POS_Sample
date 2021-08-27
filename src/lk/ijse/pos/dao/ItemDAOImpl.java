@@ -73,4 +73,8 @@ public class ItemDAOImpl {
             }
             return allItems;
         }
+
+    public boolean updateItemQtyOnHand(String itemCode, int qty) {
+            return false;
     }
+}
