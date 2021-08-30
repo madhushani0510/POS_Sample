@@ -17,6 +17,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import lk.ijse.pos.AppInitializer;
 import lk.ijse.pos.dao.CustomerDAOImpl;
+import lk.ijse.pos.dao.impl.CustomerDAO;
 import lk.ijse.pos.db.DBConnection;
 import lk.ijse.pos.model.Customer;
 import lk.ijse.pos.view.tblmodel.CustomerTM;
@@ -52,19 +53,20 @@ public class ManageCustomerFormController implements Initializable {
     @FXML
     private TableView<CustomerTM> tblCustomers;
 
-
+    CustomerDAO dao=new CustomerDAOImpl();
     private void loadAllCustomers() {
 
             try {
                 //get all customers
-                CustomerDAOImpl customerDAO = new CustomerDAOImpl();
-                ArrayList<Customer> allCustomers = customerDAO.getAllCustomers();
-                ArrayList<CustomerTM> allCustomersForTable = new ArrayList<>();
 
-                for (Customer customer : allCustomers) {
-                    allCustomersForTable.add(new CustomerTM(customer.getcID(), customer.getName(), customer.getAddress()));
+                ArrayList<Customer>all=dao.getAllCustomer();
+                ArrayList<CustomerTM>allTable=new ArrayList<>();
+
+                for (Customer customer:all) {
+                    allTable.add(new CustomerTM(customer.getcID(),customer.getName(),customer.getAddress()) );
+
                 }
-                ObservableList<CustomerTM> olCustomers = FXCollections.observableArrayList(allCustomersForTable);
+                ObservableList<CustomerTM> olCustomers = FXCollections.observableArrayList(allTable);
                 tblCustomers.setItems(olCustomers);
 
 

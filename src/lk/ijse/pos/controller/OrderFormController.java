@@ -27,9 +27,8 @@ import lk.ijse.pos.dao.OrderDetailsDAO;
 import lk.ijse.pos.db.DBConnection;
 import lk.ijse.pos.model.Customer;
 import lk.ijse.pos.model.Item;
-import lk.ijse.pos.model.OrderDetails;
 import lk.ijse.pos.model.Orders;
-import lk.ijse.pos.view.tblmodel.OrderDetailTM;
+import lk.ijse.pos.view.tblmodel.OrderDetails;
 
 
 import java.io.IOException;
@@ -70,9 +69,9 @@ public class OrderFormController implements Initializable {
     @FXML
     private JFXTextField txtQty;
     @FXML
-    private TableView<OrderDetailTM> tblOrderDetails;
+    private TableView<OrderDetails> tblOrderDetails;
 
-    private ObservableList<OrderDetailTM> olOrderDetails;
+    private ObservableList<OrderDetails> olOrderDetails;
 
     private boolean update = false;
     @FXML
@@ -132,7 +131,9 @@ public class OrderFormController implements Initializable {
                 try {
 
                     CustomerDAOImpl dao = new CustomerDAOImpl();
+                    System.out.println("Customer ID : "+customerID);
                     Customer customer = dao.searchCustomer(customerID);
+                    System.out.println("Customer Details :"+ customer.toString());
                     if (customer!=null) {
                         txtCustomerName.setText(customer.getName());
                     }
@@ -191,13 +192,13 @@ public class OrderFormController implements Initializable {
         olOrderDetails = FXCollections.observableArrayList();
         tblOrderDetails.setItems(olOrderDetails);
 
-        tblOrderDetails.getItems().addListener(new ListChangeListener<OrderDetailTM>() {
+        tblOrderDetails.getItems().addListener(new ListChangeListener<OrderDetails>() {
             @Override
-            public void onChanged(Change<? extends OrderDetailTM> c) {
+            public void onChanged(Change<? extends OrderDetails> c) {
 
                 double total = 0.0;
 
-                for (OrderDetailTM orderDetail : olOrderDetails) {
+                for (OrderDetails orderDetail : olOrderDetails) {
                     total += orderDetail.getTotal();
                 }
 
@@ -206,11 +207,11 @@ public class OrderFormController implements Initializable {
             }
         });
 
-        tblOrderDetails.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<OrderDetailTM>() {
+        tblOrderDetails.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<OrderDetails>() {
             @Override
-            public void changed(ObservableValue<? extends OrderDetailTM> observable, OrderDetailTM oldValue, OrderDetailTM newValue) {
+            public void changed(ObservableValue<? extends OrderDetails> observable, OrderDetails oldValue, OrderDetails newValue) {
 
-                OrderDetailTM currentRow = observable.getValue();
+                OrderDetails currentRow = observable.getValue();
 
                 if (currentRow == null) {
                     cmbItemCode.getSelectionModel().clearSelection();
@@ -291,7 +292,7 @@ public class OrderFormController implements Initializable {
         int qty = Integer.parseInt(txtQty.getText());
         double unitPrice = Double.parseDouble(txtUnitPrice.getText());
         if (!update) {
-            for (OrderDetailTM orderDetail : olOrderDetails) {
+            for (OrderDetails orderDetail : olOrderDetails) {
                 if (orderDetail.getItemCode().equals(itemCode)) {
                     Alert error = new Alert(Alert.AlertType.ERROR, "Please update the item instead of adding", ButtonType.OK);
                     error.setHeaderText("Duplicate Entry Found");
@@ -301,7 +302,7 @@ public class OrderFormController implements Initializable {
                 }
             }
         }
-        OrderDetailTM orderDetail = new OrderDetailTM(
+        OrderDetails orderDetail = new OrderDetails(
                 itemCode,
                 txtDescription.getText(),
                 qty,
@@ -311,7 +312,7 @@ public class OrderFormController implements Initializable {
             olOrderDetails.add(orderDetail);
             tblOrderDetails.setItems(olOrderDetails);
         } else {
-            OrderDetailTM selectedRow = tblOrderDetails.getSelectionModel().getSelectedItem();
+            OrderDetails selectedRow = tblOrderDetails.getSelectionModel().getSelectedItem();
             int index = olOrderDetails.indexOf(selectedRow);
             olOrderDetails.set(index, orderDetail);
         }
@@ -323,7 +324,7 @@ public class OrderFormController implements Initializable {
 
     @FXML
     private void btnRemoveOnAction(ActionEvent event) {
-        OrderDetailTM selectedRow = tblOrderDetails.getSelectionModel().getSelectedItem();
+        OrderDetails selectedRow = tblOrderDetails.getSelectionModel().getSelectedItem();
         olOrderDetails.remove(selectedRow);
 
     }
@@ -337,6 +338,7 @@ public class OrderFormController implements Initializable {
                     //Add order record
                     OrderDAOImpl orderDAO = new OrderDAOImpl();
                     Orders orders = new Orders(txtOrderID.getText(),parseDate(txtOrderDate.getEditor().getText()),cmbCustomerID.getSelectionModel().getSelectedItem());
+                System.out.println(orders.getId()+"   "+orders.getDate()+"   "+orders.getCustomerId());
                     boolean b1 = orderDAO.addOrder(orders);
 
                     if (!b1) {
@@ -347,15 +349,15 @@ public class OrderFormController implements Initializable {
 
                     //Add Order details to table
                     OrderDetailsDAO orderDetailsDAO = new OrderDetailsDAO();
-                    for(OrderDetailTM orderDetail:olOrderDetails) {
-                        OrderDetails orderDetails = new OrderDetails(
+                    for(OrderDetails orderDetail:olOrderDetails) {
+                        lk.ijse.pos.model.OrderDetails orderDetails = new lk.ijse.pos.model.OrderDetails(
                         txtOrderID.getText(),
                         orderDetail.getItemCode(),
                         orderDetail.getQty(),
                         new BigDecimal(orderDetail.getUnitPrice()));
 
         boolean b2 = orderDetailsDAO.addOrderDetails(orderDetails);
-
+                        System.out.println("Order Details State :"+b2);
         if (!b2) {
             System.out.println("Order details addition failed");
             connection.rollback();

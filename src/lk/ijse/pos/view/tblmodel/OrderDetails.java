@@ -5,17 +5,17 @@ package lk.ijse.pos.view.tblmodel;
  * @since : 0.1.0
  **/
 
-public class OrderDetailTM {
+public class OrderDetails {
     private String itemCode;
     private String description;
     private int qty;
     private double unitPrice;
     private double total;
 
-    public OrderDetailTM() {
+    public OrderDetails() {
     }
 
-    public OrderDetailTM(String itemCode, String description, int qty, double unitPrice, double total) {
+    public OrderDetails(String itemCode, String description, int qty, double unitPrice, double total) {
         this.itemCode = itemCode;
         this.description = description;
         this.qty = qty;

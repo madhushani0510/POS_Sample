@@ -1,5 +1,6 @@
 package lk.ijse.pos.dao;
 
+import lk.ijse.pos.dao.impl.CustomerDAO;
 import lk.ijse.pos.db.DBConnection;
 import lk.ijse.pos.model.Customer;
 
@@ -11,7 +12,8 @@ import java.util.ArrayList;
  * @auther : Madhushani Gamage
  * @Data : / / 2021
  **/
-public class CustomerDAOImpl {
+public class CustomerDAOImpl implements CustomerDAO {
+
 
     public boolean addCustomer(Customer customer) throws Exception {
         Connection connection = DBConnection.getInstance().getConnection();
@@ -39,25 +41,32 @@ public class CustomerDAOImpl {
         return (pstm.executeUpdate() > 0);
     }
 
+
+
     public Customer searchCustomer(String id) throws Exception {
+
+        String sql = "select * from Customer where id=?";
         Connection connection = DBConnection.getInstance().getConnection();
-        Statement stm = connection.createStatement();
-        ResultSet rst = stm.executeQuery("SELECT * FROM Customer where id=?");
+        PreparedStatement pstm = connection.prepareStatement(sql);
+        pstm.setObject(1, id);
+        ResultSet rst = pstm.executeQuery();
         if (rst.next()) {
             return new Customer(rst.getString("id"), rst.getString("name"), rst.getString("address"));
         }
         return null;
     }
-    public ArrayList<Customer> getAllCustomers() throws Exception {
+
+
+    public ArrayList<Customer> getAllCustomer() throws Exception {
         Connection connection = DBConnection.getInstance().getConnection();
         Statement stm = connection.createStatement();
         ResultSet rst = stm.executeQuery("SELECT * FROM Customer");
-        ArrayList<Customer> alCustomers = new ArrayList<>();
+        ArrayList<Customer> allCustomers = new ArrayList<>();
         while (rst.next()) {
-            Customer customer = new Customer(rst.getString(1), rst.getString(2), rst.getString(3));
-            alCustomers.add(customer);
+            allCustomers.add(new Customer(rst.getString(1), rst.getString(2), rst.getString(3)));
         }
-        return alCustomers;
-     }
+        return allCustomers;
+
+    }
     }
 

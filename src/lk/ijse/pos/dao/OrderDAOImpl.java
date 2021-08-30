@@ -27,7 +27,10 @@ public class OrderDAOImpl {
         pstm.setObject(2, orders.getDate());
         pstm.setObject(3, orders.getCustomerId());
         return (pstm.executeUpdate() > 0);
+
     }
+
+
 
     public boolean deleteOrder(){
         throw new UnsupportedOperationException("This feature is not supported yet");
